@@ -1,4 +1,136 @@
-<header>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chronomètre Invisible</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background: #f5f5f5;
+    }
+    h1 {
+      margin-bottom: 30px;
+    }
+    button {
+      padding: 12px 24px;
+      margin: 6px;
+      font-size: 1.1em;
+      border: none;
+      border-radius: 8px;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    #laps {
+      margin-top: 20px;
+      max-width: 300px;
+      width: 100%;
+      background: white;
+      padding: 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    #laps p {
+      margin: 6px 0;
+      font-size: 0.95em;
+      display: flex;
+      justify-content: space-between;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Chronomètre Invisible</h1>
+  <div>
+    <button id="startStopBtn">Démarrer</button>
+    <button id="toggleLapsBtn">Afficher les temps</button>
+    <button id="resetBtn">Réinitialiser</button>
+  </div>
+  <div id="laps" class="hidden"></div>
+
+  <script>
+    let startTime = null;
+    let isRunning = false;
+    const lapsContainer = document.getElementById('laps');
+    const startStopBtn = document.getElementById('startStopBtn');
+    const toggleLapsBtn = document.getElementById('toggleLapsBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    // Charger les temps depuis le localStorage
+    let laps = JSON.parse(localStorage.getItem('laps')) || [];
+
+    function saveLaps() {
+      localStorage.setItem('laps', JSON.stringify(laps));
+    }
+
+    function renderLaps() {
+      lapsContainer.innerHTML = '';
+      if (laps.length === 0) {
+        lapsContainer.innerHTML = '<p>Aucun temps enregistré.</p>';
+        return;
+      }
+      laps.forEach(lap => {
+        const p = document.createElement('p');
+        const date = new Date(lap.timestamp);
+        p.innerHTML = `<span>${date.toLocaleString()}</span><span>${formatDuration(lap.duration)}</span>`;
+        lapsContainer.appendChild(p);
+      });
+    }
+
+    function formatDuration(ms) {
+      const totalSeconds = Math.floor(ms / 1000);
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      const milliseconds = ms % 1000;
+      return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`;
+    }
+
+    startStopBtn.addEventListener('click', () => {
+      if (!isRunning) {
+        // Démarrage
+        startTime = Date.now();
+        isRunning = true;
+        startStopBtn.textContent = 'Arrêter';
+      } else {
+        // Arrêt et enregistrement
+        const endTime = Date.now();
+        const duration = endTime - startTime;
+        laps.unshift({ timestamp: endTime, duration });
+        saveLaps();
+        if (!lapsContainer.classList.contains('hidden')) renderLaps();
+        isRunning = false;
+        startStopBtn.textContent = 'Démarrer';
+      }
+    });
+
+    toggleLapsBtn.addEventListener('click', () => {
+      lapsContainer.classList.toggle('hidden');
+      toggleLapsBtn.textContent = lapsContainer.classList.contains('hidden') ? 'Afficher les temps' : 'Cacher les temps';
+      if (!lapsContainer.classList.contains('hidden')) renderLaps();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      if (confirm('Effacer tous les temps enregistrés ?')) {
+        laps = [];
+        saveLaps();
+        renderLaps();
+      }
+    });
+  </script>
+</body>
+</html>
 
 <!--
   <<< Author notes: Course header >>>
